@@ -1,31 +1,48 @@
-document.getElementById('send-btn').addEventListener('click', function() {
-    const userInput = document.getElementById('user-input').value;
-    
-    if (userInput.trim() !== "") {
-        addMessage(userInput, 'user'); // Display user message
-        
-        fetch('http://127.0.0.1:5000/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message: userInput })
-        })
-        .then(response => response.json())
-        .then(data => {
-            addMessage(data.response, 'bot');  // Display chatbot response
-        })
-        .catch(error => console.error('Error:', error));
-        
-        document.getElementById('user-input').value = '';  // Clear input box
+// Get the necessary DOM elements
+const userInput = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+const messagesContainer = document.getElementById('messages');
+
+// Send a message when the button is clicked or Enter is pressed
+sendBtn.addEventListener('click', sendMessage);
+userInput.addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
     }
 });
 
-function addMessage(message, type) {
-    const chatBox = document.getElementById('chat-box');
+// Function to display messages in the chat window
+function displayMessage(text, sender) {
     const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message', type);
-    messageDiv.innerHTML = `<div class="content">${message}</div>`;
-    chatBox.appendChild(messageDiv);
-    chatBox.scrollTop = chatBox.scrollHeight;  // Auto-scroll to bottom
+    messageDiv.classList.add('message', sender);
+    messageDiv.innerText = text;
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Function to handle sending messages
+function sendMessage() {
+    const message = userInput.value.trim();
+    if (message === '') return;
+
+    // Display the user's message in the chat window
+    displayMessage(message, 'user');
+    userInput.value = '';
+
+    // Send the user's message to the Flask backend
+    fetch('http://127.0.0.1:5000/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Display the chatbot's response in the chat window
+        displayMessage(data.response, 'bot');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
 }
